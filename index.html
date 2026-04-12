@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Smart Attendance Predictor — A calendar-based attendance simulation engine that helps students predict their attendance percentage and plan their academic schedule." />
+  <title>Smart Attendance Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-primary:#0a0e1a;
+  --bg-card:rgba(16,22,40,0.75);
+  --bg-card-hover:rgba(20,28,50,0.85);
+  --border-card:rgba(99,130,255,0.12);
+  --border-active:rgba(99,130,255,0.35);
+  --accent-primary:#6c8cff;
+  --accent-secondary:#a78bfa;
+  --accent-gradient:linear-gradient(135deg,#6c8cff 0%,#a78bfa 50%,#f472b6 100%);
+  --accent-glow:rgba(108,140,255,0.3);
+  --text-primary:#e8ecf4;
+  --text-secondary:#8892a8;
+  --text-muted:#5a6278;
+  --success:#34d399;
+  --success-bg:rgba(52,211,153,0.1);
+  --error:#f87171;
+  --error-bg:rgba(248,113,113,0.1);
+  --warning:#fbbf24;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:20px;
+  --radius-xl:28px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.15);
+  --shadow-md:0 8px 32px rgba(0,0,0,0.25);
+  --shadow-lg:0 16px 48px rgba(0,0,0,0.35);
+  --shadow-glow:0 0 40px var(--accent-glow);
+  --font-main:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --transition-fast:0.15s ease;
+  --transition-med:0.3s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow:0.5s cubic-bezier(0.4,0,0.2,1);
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--font-main);background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+/* ===== ANIMATED BACKGROUND ===== */
+.bg-orbs{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.35;animation:orbFloat 20s ease-in-out infinite}
+.orb-1{width:500px;height:500px;background:radial-gradient(circle,#6c8cff 0%,transparent 70%);top:-10%;right:-5%;animation-delay:0s}
+.orb-2{width:400px;height:400px;background:radial-gradient(circle,#a78bfa 0%,transparent 70%);bottom:-5%;left:-5%;animation-delay:-7s}
+.orb-3{width:350px;height:350px;background:radial-gradient(circle,#f472b6 0%,transparent 70%);top:50%;left:40%;animation-delay:-14s}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(30px,-50px) scale(1.05)}50%{transform:translate(-20px,20px) scale(0.95)}75%{transform:translate(40px,30px) scale(1.02)}}
+
+/* ===== CONTAINER ===== */
+.container{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:40px 20px 60px}
+
+/* ===== HEADER ===== */
+.header{text-align:center;margin-bottom:36px;animation:fadeInDown 0.7s ease-out}
+.logo-icon{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:var(--radius-md);background:var(--accent-gradient);color:#fff;margin-bottom:20px;box-shadow:var(--shadow-glow)}
+.header h1{font-size:2rem;font-weight:800;letter-spacing:-0.03em;background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.subtitle{color:var(--text-secondary);font-size:0.95rem;font-weight:400;line-height:1.5;max-width:420px;margin:0 auto}
+
+/* ===== CARD ===== */
+.card{background:var(--bg-card);border:1px solid var(--border-card);border-radius:var(--radius-lg);padding:28px;margin-bottom:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:border-color var(--transition-med),box-shadow var(--transition-med),transform var(--transition-med);animation:fadeInUp 0.6s ease-out backwards}
+.card:nth-child(2){animation-delay:0.05s}
+.card:nth-child(3){animation-delay:0.1s}
+.card:nth-child(4){animation-delay:0.15s}
+.card:nth-child(5){animation-delay:0.2s}
+.card:nth-child(6){animation-delay:0.25s}
+.card:nth-child(7){animation-delay:0.3s}
+.card:hover{border-color:var(--border-active);box-shadow:0 0 24px rgba(108,140,255,0.06)}
+.card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.card-icon{font-size:1.4rem;line-height:1}
+.card-header h2{font-size:1.15rem;font-weight:700;letter-spacing:-0.01em}
+
+/* ===== INPUTS ===== */
+.input-group{margin-bottom:16px}
+.input-group:last-child{margin-bottom:0}
+.input-group label{display:block;font-size:0.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.helper-text{font-size:0.78rem;color:var(--text-muted);line-height:1.4;margin-bottom:10px}
+.input-wrapper{position:relative;display:flex;align-items:center}
+.input-wrapper input{padding-right:42px}
+.input-suffix{position:absolute;right:16px;color:var(--text-muted);font-size:0.9rem;font-weight:600;pointer-events:none}
+input[type="number"],input[type="date"]{width:100%;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-main);font-size:0.95rem;font-weight:500;transition:border-color var(--transition-fast),box-shadow var(--transition-fast);outline:none}
+input[type="number"]:focus,input[type="date"]:focus{border-color:var(--accent-primary);box-shadow:0 0 0 3px rgba(108,140,255,0.15)}
+input[type="number"]::placeholder{color:var(--text-muted);font-weight:400}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);cursor:pointer}
+input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+
+/* ===== DATE SELECTOR ===== */
+.date-selector{margin-top:4px}
+.date-picker-row{display:flex;gap:10px;margin-bottom:12px}
+.date-picker-row input[type="date"]{flex:1}
+
+/* ===== TAGS ===== */
+.tags-container{display:flex;flex-wrap:wrap;gap:8px;min-height:36px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(108,140,255,0.1);border:1px solid rgba(108,140,255,0.2);border-radius:100px;font-size:0.78rem;font-weight:500;color:var(--accent-primary);animation:scaleIn 0.2s ease-out}
+.tag-remove{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:none;background:rgba(255,255,255,0.1);border-radius:50%;color:var(--text-secondary);font-size:0.65rem;cursor:pointer;transition:background var(--transition-fast),color var(--transition-fast);line-height:1;padding:0}
+.tag-remove:hover{background:var(--error);color:#fff}
+.empty-state{font-size:0.78rem;color:var(--text-muted);font-style:italic}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border:none;border-radius:var(--radius-sm);font-family:var(--font-main);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all var(--transition-fast);line-height:1}
+.btn-add{background:rgba(108,140,255,0.12);color:var(--accent-primary);border:1px solid rgba(108,140,255,0.2);white-space:nowrap;flex-shrink:0}
+.btn-add:hover{background:rgba(108,140,255,0.22);border-color:rgba(108,140,255,0.4)}
+.btn-primary{width:100%;padding:14px 24px;background:var(--accent-gradient);color:#fff;font-size:0.95rem;font-weight:700;border-radius:var(--radius-md);box-shadow:0 4px 20px rgba(108,140,255,0.25);margin-top:8px;position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:left 0.5s ease}
+.btn-primary:hover::before{left:100%}
+.btn-primary:hover{box-shadow:0 6px 28px rgba(108,140,255,0.4);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0);box-shadow:0 2px 12px rgba(108,140,255,0.25)}
+
+/* ===== MODE TABS ===== */
+.mode-tabs{display:flex;gap:8px;margin-bottom:24px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);padding:4px}
+.mode-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;background:transparent;border:none;border-radius:6px;color:var(--text-secondary);font-family:var(--font-main);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all var(--transition-fast)}
+.mode-tab svg{flex-shrink:0}
+.mode-tab:hover{color:var(--text-primary);background:rgba(255,255,255,0.04)}
+.mode-tab.active{background:rgba(108,140,255,0.12);color:var(--accent-primary);box-shadow:0 2px 8px rgba(108,140,255,0.1)}
+
+/* ===== MODE CONTENT ===== */
+.mode-content{display:none}
+.mode-content.active{display:block;animation:fadeIn 0.3s ease-out}
+
+/* ===== RESULT CARD ===== */
+.result-card{text-align:center;padding:36px 28px;border-color:rgba(52,211,153,0.2);background:rgba(16,22,40,0.85)}
+.result-card.error-state{border-color:rgba(248,113,113,0.2)}
+.result-icon{font-size:2.5rem;margin-bottom:16px;animation:bounceIn 0.5s ease-out}
+.result-text{font-size:1.25rem;font-weight:700;color:var(--text-primary);margin-bottom:12px;line-height:1.4}
+.result-highlight{background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:2rem;font-weight:800;display:block;margin-top:4px}
+.result-details{font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-top:8px}
+.result-details span{color:var(--text-primary);font-weight:600}
+
+/* ===== HIDDEN ===== */
+.hidden{display:none !important}
+
+/* ===== ERROR MESSAGE ===== */
+.error-msg{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--error-bg);border:1px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);color:var(--error);font-size:0.82rem;font-weight:500;margin-top:8px;animation:shakeX 0.4s ease-out}
+
+/* ===== NOTIFICATION BANNER ===== */
+.notice-banner{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px 18px;
+  background:rgba(251,191,36,0.08);
+  border:1px solid rgba(251,191,36,0.28);
+  border-radius:var(--radius-md);
+  margin-bottom:20px;
+  animation:fadeInDown 0.6s ease-out;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.notice-icon{
+  font-size:1.15rem;
+  line-height:1.4;
+  flex-shrink:0;
+}
+.notice-body{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.notice-main{
+  font-size:0.84rem;
+  font-weight:600;
+  color:#fde68a;
+  line-height:1.5;
+}
+.notice-sub{
+  font-size:0.76rem;
+  color:rgba(253,230,138,0.65);
+  line-height:1.4;
+}
+
+.notice-rows{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  margin-top:8px;
+}
+.notice-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  font-size:0.77rem;
+  color:rgba(253,230,138,0.72);
+  line-height:1.5;
+  padding:7px 0;
+}
+.notice-tag{
+  flex-shrink:0;
+  font-size:0.7rem;
+  font-weight:700;
+  color:#fcd34d;
+  background:rgba(251,191,36,0.12);
+  border:1px solid rgba(251,191,36,0.22);
+  border-radius:100px;
+  padding:2px 9px;
+  white-space:nowrap;
+  letter-spacing:0.01em;
+  margin-top:1px;
+}
+.notice-divider{
+  height:1px;
+  background:rgba(251,191,36,0.12);
+  margin:0;
+}
+
+/* ===== FOOTER ===== */
+.footer{text-align:center;padding:24px 0 0;color:var(--text-muted);font-size:0.75rem;letter-spacing:0.02em}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+@keyframes bounceIn{0%{opacity:0;transform:scale(0.3)}50%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:700px){
+  .container{padding:28px 16px 48px}
+  .header h1{font-size:1.6rem}
+  .subtitle{font-size:0.85rem}
+  .card{padding:22px 18px;border-radius:var(--radius-md)}
+  .mode-tab{font-size:0.72rem;padding:8px 8px;gap:5px}
+  .mode-tab svg{width:14px;height:14px}
+  .result-highlight{font-size:1.6rem}
+  .orb-1{width:300px;height:300px}
+  .orb-2{width:250px;height:250px}
+  .orb-3{width:200px;height:200px}
+}
+@media(max-width:400px){
+  .container{padding:20px 12px 40px}
+  .header h1{font-size:1.35rem}
+  .logo-icon{width:52px;height:52px}
+  .logo-icon svg{width:28px;height:28px}
+  .card{padding:18px 14px}
+  .btn-primary{padding:12px 18px;font-size:0.88rem}
+  .date-picker-row{flex-direction:column}
+  .mode-tabs{flex-direction:column}
+}
+  </style>
+</head>
+<body>
+  <!-- Animated background orbs -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <main class="container">
+    <!-- Notification Banner -->
+    <div class="notice-banner" role="note" aria-label="Attendance timing notice">
+      <span class="notice-icon">ℹ️</span>
+      <div class="notice-body">
+        <span class="notice-main">All attendance calculations reflect the final updated value after all lectures of that day <strong style="color:#fcd34d;">( 9 PM IST )</strong>.</span>
+        <div class="notice-rows">
+          <div class="notice-row">
+            <span class="notice-tag">📅 Date Prediction</span>
+            <span>Shows your attendance at <strong>9 PM</strong> on the selected date — after all classes are done. To check attendance <em>before</em> a day's classes, select the <strong>previous date</strong>. e.g. for before 19 Apr classes → select 18 Apr.</span>
+          </div>
+          <div class="notice-divider"></div>
+          <div class="notice-row">
+            <span class="notice-tag">🏆 Goal Predictor</span>
+            <span>The result date is when your attendance will <em>reach or cross</em> the target percentage by <strong>9 PM</strong> of that day — not the morning of it.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <rect x="2" y="4" width="32" height="28" rx="4" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M2 12H34" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M10 4V8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M26 4V8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M12 20L16 24L24 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1>Smart Attendance Predictor</h1>
+      <p class="subtitle">Plan your academic schedule intelligently with calendar-based attendance simulation</p>
+    </header>
+
+    <!-- Current Date & Attendance Card -->
+    <section class="card" id="attendance-card">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <h2>Your Current Attendance</h2>
+      </div>
+      <div class="input-group">
+        <label for="current-date-input">Select your current date</label>
+        <p class="helper-text">The date up to which your attendance is known (updated by 9 PM on this day)</p>
+        <input type="date" id="current-date-input" />
+      </div>
+      <div class="input-group">
+        <label for="attendance-input">Enter your attendance after this date</label>
+        <p class="helper-text">This should be your attendance % including all lectures of the selected date (updated by 9 PM)</p>
+        <div class="input-wrapper">
+          <input type="number" id="attendance-input" min="0" max="100" step="0.01" placeholder="e.g. 85.5" />
+          <span class="input-suffix">%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Past Holidays Card -->
+    <section class="card" id="past-holiday-card">
+      <div class="card-header">
+        <span class="card-icon">📅</span>
+        <h2>Past Holidays</h2>
+      </div>
+      <p class="helper-text">For accurate results, select all holidays that occurred <strong>after 12 April</strong> and <strong>before your selected current date</strong> (Sundays are auto-excluded)</p>
+      <div class="date-selector">
+        <div class="date-picker-row">
+          <input type="date" id="past-holiday-date-input" />
+          <button class="btn btn-add" id="add-past-holiday-btn" onclick="addPastHoliday()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Add
+          </button>
+        </div>
+        <div class="tags-container" id="past-holidays-list">
+          <p class="empty-state" id="past-holidays-empty">No past holidays added yet</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Future Holiday Selector Card -->
+    <section class="card" id="holiday-card">
+      <div class="card-header">
+        <span class="card-icon">🗓️</span>
+        <h2>Future Holidays</h2>
+      </div>
+      <p class="helper-text">Select upcoming expected holidays <strong>after your current date</strong> (Sundays are automatically excluded)</p>
+      <div class="date-selector">
+        <div class="date-picker-row">
+          <input type="date" id="holiday-date-input" />
+          <button class="btn btn-add" id="add-holiday-btn" onclick="addHoliday()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Add
+          </button>
+        </div>
+        <div class="tags-container" id="holidays-list">
+          <p class="empty-state" id="holidays-empty">No future holidays added yet</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Absence Selector Card -->
+    <section class="card" id="absence-card">
+      <div class="card-header">
+        <span class="card-icon">🚫</span>
+        <h2>Planned Absences</h2>
+      </div>
+      <p class="helper-text">Select dates you plan to be absent (lectures still happen, but you won't attend)</p>
+      <div class="date-selector">
+        <div class="date-picker-row">
+          <input type="date" id="absence-date-input" />
+          <button class="btn btn-add" id="add-absence-btn" onclick="addAbsence()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Add
+          </button>
+        </div>
+        <div class="tags-container" id="absences-list">
+          <p class="empty-state" id="absences-empty">No absences added yet</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mode Selection Card -->
+    <section class="card" id="mode-card">
+      <div class="card-header">
+        <span class="card-icon">🎯</span>
+        <h2>Prediction Mode</h2>
+      </div>
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-future" onclick="switchMode('future')">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5V9L12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Future Date Prediction
+        </button>
+        <button class="mode-tab" id="tab-goal" onclick="switchMode('goal')">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L11.47 6.01L17 6.89L13 10.79L13.94 16.31L9 13.71L4.06 16.31L5 10.79L1 6.89L6.53 6.01L9 1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          Goal Predictor
+        </button>
+      </div>
+
+      <!-- Future Date Mode -->
+      <div class="mode-content active" id="mode-future">
+        <div class="input-group">
+          <label for="target-date-input">Select the date for which you want to know your attendance <span style="color:var(--warning);font-weight:700;">(9 PM IST)</span></label>
+          <p class="helper-text">Attendance reflects the final updated value after all lectures of that day are completed. To check attendance <em>before</em> a particular day's classes, select the previous day.</p>
+          <input type="date" id="target-date-input" />
+        </div>
+        <button class="btn btn-primary" id="predict-future-btn" onclick="predictFuture()">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9H15M11 5L15 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Predict Attendance
+        </button>
+      </div>
+
+      <!-- Goal Mode -->
+      <div class="mode-content" id="mode-goal">
+        <div class="input-group">
+          <label for="goal-input">Target attendance %</label>
+          <p class="helper-text">The attendance percentage you want to achieve</p>
+          <div class="input-wrapper">
+            <input type="number" id="goal-input" min="0" max="100" step="0.01" placeholder="e.g. 75" />
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="predict-goal-btn" onclick="predictGoal()">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9H15M11 5L15 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Find Target Date
+        </button>
+      </div>
+    </section>
+
+    <!-- Result Card -->
+    <section class="card result-card hidden" id="result-card">
+      <div class="result-icon" id="result-icon">✅</div>
+      <div class="result-text" id="result-text"></div>
+      <div class="result-details" id="result-details"></div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Built with precision · Calendar-based simulation engine</p>
+    </footer>
+  </main>
+
+  <script>
+/**
+ * Smart Attendance Predictor
+ *
+ * BASE CONSTANTS (only fixed reference point):
+ *   Base Date:    12 April 2026 (Sunday, 9 PM)
+ *   Total Lectures till base date: 358
+ *   Lectures per working day: 7
+ *
+ * DYNAMIC CALCULATION:
+ *   The user selects a "current date" and enters their attendance % as of that date
+ *   (including that day's lectures, updated by 9 PM).
+ *   The system dynamically computes total lectures from 13 April → current date,
+ *   skipping Sundays and user-provided past holidays, then converts the percentage
+ *   into attended lectures.
+ *   Future simulation starts from the next day after the current date.
+ */
+
+// ========================= CONSTANTS =========================
+const BASE_DATE = new Date(2026, 3, 12);   // 12 April 2026 (month is 0-indexed)
+const BASE_TOTAL_LECTURES = 358;
+const LECTURES_PER_DAY = 7;
+const MAX_SIMULATION_DAYS = 1500;           // Safety cap (~4 years)
+
+// ========================= STATE =========================
+const pastHolidays = [];    // Holidays between 12 Apr and current date
+const futureHolidays = [];  // Expected holidays after current date
+const absences = [];        // Planned absence dates (future)
+
+// ========================= UTILITIES =========================
+
+function toDateStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function parseDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function isSunday(date) {
+  return date.getDay() === 0;
+}
+
+function isInArray(arr, dateStr) {
+  return arr.includes(dateStr);
+}
+
+function formatDateReadable(date) {
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function formatDayName(date) {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  return days[date.getDay()];
+}
+
+function addDays(date, n) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + n);
+  return result;
+}
+
+function clearErrors(container) {
+  container.querySelectorAll('.error-msg').forEach(el => el.remove());
+}
+
+function showError(container, message) {
+  clearErrors(container);
+  const div = document.createElement('div');
+  div.className = 'error-msg';
+  div.textContent = '⚠ ' + message;
+  container.appendChild(div);
+}
+
+// ========================= PAST HOLIDAY MANAGEMENT =========================
+
+function addPastHoliday() {
+  const input = document.getElementById('past-holiday-date-input');
+  const container = document.getElementById('past-holiday-card');
+  clearErrors(container);
+
+  const val = input.value;
+  if (!val) { showError(container, 'Please select a date first.'); return; }
+
+  const d = parseDate(val);
+
+  if (d <= BASE_DATE) {
+    showError(container, 'Date must be after 12 April 2026.');
+    return;
+  }
+
+  const currentDateInput = document.getElementById('current-date-input');
+  if (currentDateInput.value) {
+    const currentDate = parseDate(currentDateInput.value);
+    if (d > currentDate) {
+      showError(container, 'Past holidays must be on or before your selected current date. Use "Future Holidays" for dates after.');
+      return;
+    }
+  }
+
+  if (pastHolidays.includes(val)) {
+    showError(container, 'This date is already added.');
+    return;
+  }
+
+  if (isSunday(d)) {
+    showError(container, 'Sundays are automatically excluded — no need to add them.');
+    return;
+  }
+
+  pastHolidays.push(val);
+  pastHolidays.sort();
+  renderPastHolidays();
+  input.value = '';
+}
+
+function removePastHoliday(dateStr) {
+  const idx = pastHolidays.indexOf(dateStr);
+  if (idx !== -1) pastHolidays.splice(idx, 1);
+  renderPastHolidays();
+}
+
+function renderPastHolidays() {
+  const list = document.getElementById('past-holidays-list');
+  const empty = document.getElementById('past-holidays-empty');
+  list.querySelectorAll('.tag').forEach(t => t.remove());
+  if (pastHolidays.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  pastHolidays.forEach(dateStr => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    const d = parseDate(dateStr);
+    const label = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    tag.innerHTML = `${label}<button class="tag-remove" onclick="removePastHoliday('${dateStr}')" title="Remove">✕</button>`;
+    list.appendChild(tag);
+  });
+}
+
+// ========================= FUTURE HOLIDAY MANAGEMENT =========================
+
+function addHoliday() {
+  const input = document.getElementById('holiday-date-input');
+  const container = document.getElementById('holiday-card');
+  clearErrors(container);
+
+  const val = input.value;
+  if (!val) { showError(container, 'Please select a date first.'); return; }
+
+  if (futureHolidays.includes(val)) {
+    showError(container, 'This date is already added as a future holiday.');
+    return;
+  }
+
+  const d = parseDate(val);
+
+  const currentDateInput = document.getElementById('current-date-input');
+  if (currentDateInput.value) {
+    const currentDate = parseDate(currentDateInput.value);
+    if (d <= currentDate) {
+      showError(container, 'Future holidays must be after your selected current date. Use "Past Holidays" for earlier dates.');
+      return;
+    }
+  }
+
+  if (isSunday(d)) {
+    showError(container, 'Sundays are automatically excluded — no need to add them.');
+    return;
+  }
+
+  futureHolidays.push(val);
+  futureHolidays.sort();
+  renderHolidays();
+  input.value = '';
+}
+
+function removeHoliday(dateStr) {
+  const idx = futureHolidays.indexOf(dateStr);
+  if (idx !== -1) futureHolidays.splice(idx, 1);
+  renderHolidays();
+}
+
+function renderHolidays() {
+  const list = document.getElementById('holidays-list');
+  const empty = document.getElementById('holidays-empty');
+  list.querySelectorAll('.tag').forEach(t => t.remove());
+  if (futureHolidays.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  futureHolidays.forEach(dateStr => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    const d = parseDate(dateStr);
+    const label = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    tag.innerHTML = `${label}<button class="tag-remove" onclick="removeHoliday('${dateStr}')" title="Remove">✕</button>`;
+    list.appendChild(tag);
+  });
+}
+
+// ========================= ABSENCE MANAGEMENT =========================
+
+function addAbsence() {
+  const input = document.getElementById('absence-date-input');
+  const container = document.getElementById('absence-card');
+  clearErrors(container);
+
+  const val = input.value;
+  if (!val) { showError(container, 'Please select a date first.'); return; }
+
+  if (absences.includes(val)) {
+    showError(container, 'This date is already added as an absence.');
+    return;
+  }
+
+  const d = parseDate(val);
+
+  const currentDateInput = document.getElementById('current-date-input');
+  if (currentDateInput.value) {
+    const currentDate = parseDate(currentDateInput.value);
+    if (d <= currentDate) {
+      showError(container, 'Absence dates must be after your selected current date.');
+      return;
+    }
+  }
+
+  if (isSunday(d)) {
+    showError(container, 'Sundays are automatically excluded — there are no lectures on Sundays.');
+    return;
+  }
+
+  if (isInArray(futureHolidays, val)) {
+    showError(container, 'This date is already marked as a future holiday — no lectures on that day.');
+    return;
+  }
+
+  absences.push(val);
+  absences.sort();
+  renderAbsences();
+  input.value = '';
+}
+
+function removeAbsence(dateStr) {
+  const idx = absences.indexOf(dateStr);
+  if (idx !== -1) absences.splice(idx, 1);
+  renderAbsences();
+}
+
+function renderAbsences() {
+  const list = document.getElementById('absences-list');
+  const empty = document.getElementById('absences-empty');
+  list.querySelectorAll('.tag').forEach(t => t.remove());
+  if (absences.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  absences.forEach(dateStr => {
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    const d = parseDate(dateStr);
+    const label = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    tag.innerHTML = `${label}<button class="tag-remove" onclick="removeAbsence('${dateStr}')" title="Remove">✕</button>`;
+    list.appendChild(tag);
+  });
+}
+
+// ========================= MODE SWITCHING =========================
+
+function switchMode(mode) {
+  const tabFuture = document.getElementById('tab-future');
+  const tabGoal = document.getElementById('tab-goal');
+  const modeFuture = document.getElementById('mode-future');
+  const modeGoal = document.getElementById('mode-goal');
+
+  if (mode === 'future') {
+    tabFuture.classList.add('active');   tabGoal.classList.remove('active');
+    modeFuture.classList.add('active');  modeGoal.classList.remove('active');
+  } else {
+    tabGoal.classList.add('active');     tabFuture.classList.remove('active');
+    modeGoal.classList.add('active');    modeFuture.classList.remove('active');
+  }
+  hideResult();
+}
+
+// ========================= RESULT DISPLAY =========================
+
+function showResult(icon, text, details, isError) {
+  const card = document.getElementById('result-card');
+  const iconEl = document.getElementById('result-icon');
+  const textEl = document.getElementById('result-text');
+  const detailsEl = document.getElementById('result-details');
+
+  iconEl.textContent = icon;
+  textEl.innerHTML = text;
+  detailsEl.innerHTML = details;
+
+  card.classList.remove('hidden', 'error-state');
+  if (isError) card.classList.add('error-state');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function hideResult() {
+  document.getElementById('result-card').classList.add('hidden');
+}
+
+// ========================= CORE CALCULATION HELPERS =========================
+
+/**
+ * Dynamically calculate total lectures from 13 April → currentDate (inclusive).
+ * Skips Sundays and past holidays. Starts from BASE_TOTAL_LECTURES (358).
+ */
+function calculateTotalLectures(currentDate) {
+  let total = BASE_TOTAL_LECTURES;
+  let loopDate = addDays(BASE_DATE, 1); // Start from 13 April
+
+  while (loopDate <= currentDate) {
+    const dateStr = toDateStr(loopDate);
+    if (!isSunday(loopDate) && !isInArray(pastHolidays, dateStr)) {
+      total += LECTURES_PER_DAY;
+    }
+    loopDate = addDays(loopDate, 1);
+  }
+
+  return total;
+}
+
+/**
+ * Get the initial state (total & attended lectures) from the user-entered
+ * percentage and selected current date.
+ */
+function getInitialState(percentage, currentDate) {
+  const total = calculateTotalLectures(currentDate);
+  const attended = (percentage / 100) * total;
+  return { total, attended };
+}
+
+/**
+ * Validate the current date and attendance percentage inputs.
+ * Returns { pct, currentDate } or null on failure.
+ */
+function validateInputs() {
+  const card = document.getElementById('attendance-card');
+  clearErrors(card);
+
+  const dateInput = document.getElementById('current-date-input');
+  if (!dateInput.value) {
+    showError(card, 'Please select your current date.');
+    return null;
+  }
+
+  const currentDate = parseDate(dateInput.value);
+  if (currentDate <= BASE_DATE) {
+    showError(card, 'Current date must be after 12 April 2026.');
+    return null;
+  }
+
+  const attInput = document.getElementById('attendance-input');
+  const val = attInput.value.trim();
+  if (val === '') {
+    showError(card, 'Please enter your current attendance percentage.');
+    return null;
+  }
+
+  const pct = parseFloat(val);
+  if (isNaN(pct)) {
+    showError(card, 'Please enter a valid number.');
+    return null;
+  }
+
+  if (pct < 0 || pct > 100) {
+    showError(card, 'Attendance must be between 0% and 100%.');
+    return null;
+  }
+
+  return { pct, currentDate };
+}
+
+// ========================= FEATURE 1: FUTURE DATE PREDICTION =========================
+
+function predictFuture() {
+  const modeCard = document.getElementById('mode-card');
+  clearErrors(modeCard);
+
+  const inputs = validateInputs();
+  if (!inputs) return;
+  const { pct, currentDate } = inputs;
+
+  const dateInput = document.getElementById('target-date-input');
+  if (!dateInput.value) {
+    showError(modeCard, 'Please select a target date.');
+    return;
+  }
+
+  const targetDate = parseDate(dateInput.value);
+  const simStart = addDays(currentDate, 1);
+
+  if (targetDate < simStart) {
+    showError(modeCard, 'Target date must be after your selected current date.');
+    return;
+  }
+
+  let { total, attended } = getInitialState(pct, currentDate);
+
+  let current = new Date(simStart);
+  let workingDays = 0, absentDays = 0, holidayDays = 0, sundayCount = 0;
+
+  while (current <= targetDate) {
+    const dateStr = toDateStr(current);
+
+    if (isSunday(current)) {
+      sundayCount++;
+      current = addDays(current, 1);
+      continue;
+    }
+
+    if (isInArray(futureHolidays, dateStr)) {
+      holidayDays++;
+      current = addDays(current, 1);
+      continue;
+    }
+
+    // Working day
+    total += LECTURES_PER_DAY;
+
+    if (isInArray(absences, dateStr)) {
+      absentDays++;
+    } else {
+      attended += LECTURES_PER_DAY;
+      workingDays++;
+    }
+
+    current = addDays(current, 1);
+  }
+
+  const resultPct = (attended / total) * 100;
+  const dateReadable = formatDateReadable(targetDate);
+  const dayName = formatDayName(targetDate);
+
+  showResult(
+    resultPct >= 75 ? '🎉' : '⚠️',
+    `Your attendance on <strong>${dayName}, ${dateReadable}</strong> will be:
+     <span class="result-highlight">${resultPct.toFixed(2)}%</span>`,
+    `<span>Total Lectures:</span> ${total} &nbsp;·&nbsp;
+     <span>Attended:</span> ${Math.round(attended)} &nbsp;·&nbsp;
+     <span>Working Days:</span> ${workingDays} &nbsp;·&nbsp;
+     <span>Absent Days:</span> ${absentDays} &nbsp;·&nbsp;
+     <span>Holidays:</span> ${holidayDays} &nbsp;·&nbsp;
+     <span>Sundays:</span> ${sundayCount}`,
+    resultPct < 75
+  );
+}
+
+// ========================= FEATURE 2: GOAL ATTENDANCE PREDICTOR =========================
+
+function predictGoal() {
+  const modeCard = document.getElementById('mode-card');
+  clearErrors(modeCard);
+
+  const inputs = validateInputs();
+  if (!inputs) return;
+  const { pct, currentDate } = inputs;
+
+  const goalInput = document.getElementById('goal-input');
+  const goalVal = goalInput.value.trim();
+  if (goalVal === '') {
+    showError(modeCard, 'Please enter your target attendance percentage.');
+    return;
+  }
+
+  const goal = parseFloat(goalVal);
+  if (isNaN(goal)) {
+    showError(modeCard, 'Please enter a valid number for goal.');
+    return;
+  }
+
+  if (goal < 0 || goal > 100) {
+    showError(modeCard, 'Goal must be between 0% and 100%.');
+    return;
+  }
+
+  let { total, attended } = getInitialState(pct, currentDate);
+
+  const currentPct = (attended / total) * 100;
+  if (currentPct >= goal) {
+    showResult(
+      '🎉',
+      `You've already reached your goal!
+       <span class="result-highlight">${currentPct.toFixed(2)}%</span>`,
+      `Your current attendance is already at or above <span>${goal}%</span>.`,
+      false
+    );
+    return;
+  }
+
+  let current = addDays(currentDate, 1);
+  let dayCount = 0, workingDays = 0, absentDays = 0;
+  let foundDate = null;
+
+  while (dayCount < MAX_SIMULATION_DAYS) {
+    const dateStr = toDateStr(current);
+
+    if (isSunday(current)) {
+      current = addDays(current, 1);
+      dayCount++;
+      continue;
+    }
+
+    if (isInArray(futureHolidays, dateStr)) {
+      current = addDays(current, 1);
+      dayCount++;
+      continue;
+    }
+
+    // Working day
+    total += LECTURES_PER_DAY;
+
+    if (isInArray(absences, dateStr)) {
+      absentDays++;
+    } else {
+      attended += LECTURES_PER_DAY;
+      workingDays++;
+    }
+
+    if ((attended / total) * 100 >= goal) {
+      foundDate = new Date(current);
+      break;
+    }
+
+    current = addDays(current, 1);
+    dayCount++;
+  }
+
+  if (foundDate) {
+    const dateReadable = formatDateReadable(foundDate);
+    const dayName = formatDayName(foundDate);
+    const finalPct = (attended / total) * 100;
+
+    showResult(
+      '🏆',
+      `You will reach <strong>${goal}%</strong> attendance on:
+       <span class="result-highlight">${dayName}, ${dateReadable}</span>`,
+      `<span>Attendance at that point:</span> ${finalPct.toFixed(2)}% &nbsp;·&nbsp;
+       <span>Total Lectures:</span> ${total} &nbsp;·&nbsp;
+       <span>Attended:</span> ${Math.round(attended)} &nbsp;·&nbsp;
+       <span>Working Days needed:</span> ${workingDays} &nbsp;·&nbsp;
+       <span>Absent Days:</span> ${absentDays}`,
+      false
+    );
+  } else {
+    showResult(
+      '❌',
+      `Goal cannot be reached with current inputs`,
+      `With <span>${absences.length}</span> planned absences and <span>${futureHolidays.length}</span> future holidays,
+       the goal of <span>${goal}%</span> could not be reached within ${MAX_SIMULATION_DAYS} days of simulation.
+       Try reducing your planned absences or lowering your goal.`,
+      true
+    );
+  }
+}
+
+// ========================= INITIALIZATION =========================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Minimum date for current date input: 13 April 2026 (day after base)
+  const minDate = toDateStr(addDays(BASE_DATE, 1)); // "2026-04-13"
+  document.getElementById('current-date-input').setAttribute('min', minDate);
+  document.getElementById('past-holiday-date-input').setAttribute('min', minDate);
+});
+  </script>
+</body>
+</html>
