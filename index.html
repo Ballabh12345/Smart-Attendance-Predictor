@@ -783,8 +783,8 @@ function validateInputs() {
   }
 
   const currentDate = parseDate(dateInput.value);
-  if (currentDate <= BASE_DATE) {
-    showError(card, 'Current date must be after 12 April 2026.');
+  if (currentDate < BASE_DATE) {
+    showError(card, 'Current date must be on or after 12 April 2026.');
     return null;
   }
 
@@ -995,10 +995,13 @@ function predictGoal() {
 // ========================= INITIALIZATION =========================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Minimum date for current date input: 13 April 2026 (day after base)
-  const minDate = toDateStr(addDays(BASE_DATE, 1)); // "2026-04-13"
-  document.getElementById('current-date-input').setAttribute('min', minDate);
-  document.getElementById('past-holiday-date-input').setAttribute('min', minDate);
+  // Current date input: minimum is 12 April 2026 (the base date itself is valid)
+  const minCurrentDate = toDateStr(BASE_DATE); // "2026-04-12"
+  document.getElementById('current-date-input').setAttribute('min', minCurrentDate);
+
+  // Past holidays must be AFTER the base (13 April onwards)
+  const minPastHoliday = toDateStr(addDays(BASE_DATE, 1)); // "2026-04-13"
+  document.getElementById('past-holiday-date-input').setAttribute('min', minPastHoliday);
 });
   </script>
 </body>
