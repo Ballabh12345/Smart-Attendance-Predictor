@@ -208,6 +208,94 @@ input[type="number"]{-moz-appearance:textfield}
   margin:0;
 }
 
+/* ===== AUTO-HOLIDAY INFO BANNER ===== */
+.auto-holiday-banner{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:16px 18px;
+  background:rgba(56,189,248,0.07);
+  border:1px solid rgba(56,189,248,0.22);
+  border-radius:var(--radius-md);
+  margin-bottom:20px;
+  animation:fadeInUp 0.6s ease-out 0.15s backwards;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.auto-holiday-banner .ahi-icon{
+  font-size:1.2rem;
+  line-height:1.4;
+  flex-shrink:0;
+  margin-top:1px;
+}
+.auto-holiday-banner .ahi-body{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.auto-holiday-banner .ahi-title{
+  font-size:0.84rem;
+  font-weight:700;
+  color:#7dd3fc;
+  line-height:1.5;
+}
+.auto-holiday-banner .ahi-list{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin:2px 0 0;
+}
+.auto-holiday-banner .ahi-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:0.77rem;
+  color:rgba(186,230,253,0.78);
+  line-height:1.45;
+}
+.auto-holiday-banner .ahi-dot{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#38bdf8;
+  flex-shrink:0;
+  opacity:0.7;
+}
+.auto-holiday-banner .ahi-divider{
+  height:1px;
+  background:rgba(56,189,248,0.12);
+  margin:4px 0;
+}
+.auto-holiday-banner .ahi-footer{
+  font-size:0.76rem;
+  color:rgba(186,230,253,0.55);
+  line-height:1.45;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.auto-holiday-banner .ahi-footer-icon{
+  font-size:0.7rem;
+  opacity:0.8;
+}
+.auto-holiday-banner strong{
+  color:#bae6fd;
+  font-weight:600;
+}
+.auto-holiday-banner .ahi-date-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:0.7rem;
+  font-weight:600;
+  color:#7dd3fc;
+  background:rgba(56,189,248,0.1);
+  border:1px solid rgba(56,189,248,0.18);
+  border-radius:100px;
+  padding:2px 9px;
+  white-space:nowrap;
+}
+
 /* ===== FOOTER ===== */
 .footer{text-align:center;padding:24px 0 0;color:var(--text-muted);font-size:0.75rem;letter-spacing:0.02em}
 
@@ -308,13 +396,36 @@ input[type="number"]{-moz-appearance:textfield}
       </div>
     </section>
 
+    <!-- Auto-Handled Holidays Info Banner -->
+    <div class="auto-holiday-banner" role="note" aria-label="Pre-handled holidays notice">
+      <span class="ahi-icon">ℹ️</span>
+      <div class="ahi-body">
+        <span class="ahi-title">Certain past holidays have already been automatically considered in the system.</span>
+        <div class="ahi-list">
+          <div class="ahi-item">
+            <span class="ahi-dot"></span>
+            <span><span class="ahi-date-tag">📅 14 April 2026</span> &nbsp;(Tuesday) — treated as a non-working day (same as Sunday)</span>
+          </div>
+          <div class="ahi-item">
+            <span class="ahi-dot"></span>
+            <span><span class="ahi-date-tag">📅 18 April 2026</span> &nbsp;(Saturday) — treated as a non-working day (same as Sunday)</span>
+          </div>
+        </div>
+        <div class="ahi-divider"></div>
+        <div class="ahi-footer">
+          <span class="ahi-footer-icon">💡</span>
+          <span>You only need to add past holidays starting from <strong>20 April 2026 onwards</strong>. No lectures are counted on the pre-handled dates above.</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Past Holidays Card -->
     <section class="card" id="past-holiday-card">
       <div class="card-header">
         <span class="card-icon">📅</span>
         <h2>Past Holidays</h2>
       </div>
-      <p class="helper-text">For accurate results, select all holidays that occurred <strong>after 12 April</strong> and <strong>before your selected current date</strong> (Sundays are auto-excluded)</p>
+      <p class="helper-text">For accurate results, select all holidays that occurred <strong>after 12 April</strong> and <strong>before your selected current date</strong> (Sundays are auto-excluded). Dates before 20 April are already handled automatically.</p>
       <div class="date-selector">
         <div class="date-picker-row">
           <input type="date" id="past-holiday-date-input" />
@@ -455,6 +566,11 @@ const BASE_TOTAL_LECTURES = 358;
 const LECTURES_PER_DAY = 7;
 const MAX_SIMULATION_DAYS = 1500;           // Safety cap (~4 years)
 
+// Fixed system-defined holidays — treated exactly like Sundays (no lectures).
+// These dates remain visible and selectable in the UI but are always skipped
+// in every working-day calculation regardless of user input.
+const FIXED_HOLIDAYS = ["2026-04-14", "2026-04-18"]; // 14 Apr (Tue), 18 Apr (Sat)
+
 // ========================= STATE =========================
 const pastHolidays = [];    // Holidays between 12 Apr and current date
 const futureHolidays = [];  // Expected holidays after current date
@@ -544,6 +660,11 @@ function addPastHoliday() {
 
   if (isSunday(d)) {
     showError(container, 'Sundays are automatically excluded — no need to add them.');
+    return;
+  }
+
+  if (FIXED_HOLIDAYS.includes(val)) {
+    showError(container, 'This date is already automatically handled by the system (pre-defined holiday). No need to add it.');
     return;
   }
 
@@ -749,7 +870,7 @@ function calculateTotalLectures(currentDate) {
 
   while (loopDate <= currentDate) {
     const dateStr = toDateStr(loopDate);
-    if (!isSunday(loopDate) && !isInArray(pastHolidays, dateStr)) {
+    if (!isSunday(loopDate) && !isInArray(FIXED_HOLIDAYS, dateStr) && !isInArray(pastHolidays, dateStr)) {
       total += LECTURES_PER_DAY;
     }
     loopDate = addDays(loopDate, 1);
@@ -847,6 +968,13 @@ function predictFuture() {
       continue;
     }
 
+    // Fixed system holidays (e.g. 14 Apr, 18 Apr 2026) — treated identically to Sundays.
+    if (isInArray(FIXED_HOLIDAYS, dateStr)) {
+      holidayDays++;
+      current = addDays(current, 1);
+      continue;
+    }
+
     if (isInArray(futureHolidays, dateStr)) {
       holidayDays++;
       current = addDays(current, 1);
@@ -934,6 +1062,13 @@ function predictGoal() {
     const dateStr = toDateStr(current);
 
     if (isSunday(current)) {
+      current = addDays(current, 1);
+      dayCount++;
+      continue;
+    }
+
+    // Fixed system holidays (e.g. 14 Apr, 18 Apr 2026) — treated identically to Sundays.
+    if (isInArray(FIXED_HOLIDAYS, dateStr)) {
       current = addDays(current, 1);
       dayCount++;
       continue;
